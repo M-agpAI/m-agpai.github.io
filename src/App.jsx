@@ -9,16 +9,32 @@ import {
   FileText,
   Sparkles
 } from "lucide-react";
+import ProteinViewer from "./components/ProteinViewer";
 
 const metals = ["Zn²⁺", "Fe²⁺", "Mg²⁺", "Cu²⁺", "Ni²⁺", "Co²⁺"];
 
+// const demoStructures = [
+//   { rank: 1, name: "design_rank_1.pdb", energy: -18.7, confidence: 0.96 },
+//   { rank: 2, name: "design_rank_2.pdb", energy: -17.9, confidence: 0.94 },
+//   { rank: 3, name: "design_rank_3.pdb", energy: -16.8, confidence: 0.91 },
+//   { rank: 4, name: "design_rank_4.pdb", energy: -15.6, confidence: 0.89 },
+//   { rank: 5, name: "design_rank_5.pdb", energy: -14.8, confidence: 0.86 }
+// ];
+
+
 const demoStructures = [
-  { rank: 1, name: "design_rank_1.pdb", energy: -18.7, confidence: 0.96 },
-  { rank: 2, name: "design_rank_2.pdb", energy: -17.9, confidence: 0.94 },
-  { rank: 3, name: "design_rank_3.pdb", energy: -16.8, confidence: 0.91 },
-  { rank: 4, name: "design_rank_4.pdb", energy: -15.6, confidence: 0.89 },
-  { rank: 5, name: "design_rank_5.pdb", energy: -14.8, confidence: 0.86 }
+  { rank: 1, name: "design_1.cif" },
+  { rank: 2, name: "design_2.cif" },
+  { rank: 3, name: "design_3.cif" },
+  { rank: 4, name: "design_4.cif" },
+  { rank: 5, name: "design_5.cif" },
+  { rank: 6, name: "design_6.cif" },
+  { rank: 7, name: "design_7.cif" },
+  { rank: 8, name: "design_8.cif" },
+  { rank: 9, name: "design_9.cif" },
+  { rank: 10, name: "design_10.cif" }
 ];
+
 
 function Step({ number, title, active, done, icon: Icon }) {
   return (
@@ -36,9 +52,20 @@ function Step({ number, title, active, done, icon: Icon }) {
 }
 
 export default function App() {
+
+  // const [selectedStructure, setSelectedStructure] = useState(
+  //     `${import.meta.env.BASE_URL}demo_structures/design_1.cif`
+  //   );
+  
+
+  const [selectedStructure, setSelectedStructure] = useState(
+    `${import.meta.env.BASE_URL}demo_structures/design_1.cif`
+);
+
+
   const [inputMode, setInputMode] = useState("pdb");
   const [sequence, setSequence] = useState(
-    ">example_protein\nMKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQ..."
+    "MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQ..."
   );
   const [fileName, setFileName] = useState("");
   const [status, setStatus] = useState("input");
@@ -133,7 +160,7 @@ export default function App() {
 
           <Step
             number="4"
-            title="Top 5 structures"
+            title="Top 10 structures"
             icon={Download}
             active={activeStep === 4}
             done={false}
@@ -230,7 +257,7 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="protein-viewer">
+              {/* <div className="protein-viewer">
                 <div className="viewer-label">Protein viewer mock-up</div>
 
                 <svg viewBox="0 0 100 100" className="protein-svg">
@@ -284,6 +311,10 @@ export default function App() {
                     Binding-site search complete. Top designs are ready.
                   </div>
                 )}
+              </div> */}
+
+              <div className="protein-viewer">
+                <ProteinViewer structureUrl={selectedStructure} />
               </div>
 
               <button
@@ -301,36 +332,41 @@ export default function App() {
             </div>
 
             <div className="panel">
-              <h2>Top 5 structures</h2>
+              <h2>Top 10 structures</h2>
 
               {status !== "results" ? (
                 <div className="empty-results">
                   Results appear here after the binding-site algorithm runs.
                 </div>
               ) : (
-                <div className="results-list">
-                  {demoStructures.map((structure) => (
-                    <div className="result-card" key={structure.rank}>
-                      <div>
-                        <strong>
-                          #{structure.rank} {structure.name}
-                        </strong>
+                <div className="results-layout">
+                  <div className="results-list">
+                    {demoStructures.map((structure) => (
+                      <div
+                        className="result-card clickable"
+                        key={structure.rank}
+                        onClick={() =>
+                          setSelectedStructure(
+                            `${import.meta.env.BASE_URL}demo_structures/${structure.name}`
+                          )
+                        }
+                      >
+                        <div>
+                          <strong>
+                            #{structure.rank} {structure.name}
+                          </strong>
 
-                        <span>
-                          Metal: {selectedMetal} · Energy: {structure.energy}
-                        </span>
+                          <span>
+                            Metal: {selectedMetal}
+                          </span>
+                        </div>
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="result-actions">
-                        <em>{Math.round(structure.confidence * 100)}%</em>
-
-                        <button>
-                          <Download size={16} />
-                          PDB
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                  {/* <div className="viewer-container">
+                    <ProteinViewer structureUrl={selectedStructure} />
+                  </div> */}
                 </div>
               )}
             </div>
