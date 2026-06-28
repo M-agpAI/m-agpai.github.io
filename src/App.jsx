@@ -11,15 +11,7 @@ import {
 } from "lucide-react";
 import ProteinViewer from "./components/ProteinViewer";
 
-const metals = ["Zn²⁺", "Fe²⁺", "Mg²⁺", "Cu²⁺", "Ni²⁺", "Co²⁺"];
-
-// const demoStructures = [
-//   { rank: 1, name: "design_rank_1.pdb", energy: -18.7, confidence: 0.96 },
-//   { rank: 2, name: "design_rank_2.pdb", energy: -17.9, confidence: 0.94 },
-//   { rank: 3, name: "design_rank_3.pdb", energy: -16.8, confidence: 0.91 },
-//   { rank: 4, name: "design_rank_4.pdb", energy: -15.6, confidence: 0.89 },
-//   { rank: 5, name: "design_rank_5.pdb", energy: -14.8, confidence: 0.86 }
-// ];
+const metals = ["ZN", "FE", "MG", "CU", "NI", "CO"];
 
 
 const demoStructures = [
@@ -118,7 +110,7 @@ export default function App() {
 
     try {
       const response = await fetch(
-        "https://dkumar-magpai.hf.space/run-magpai",
+        "https://dkumar-magpai.hf.space/run-metal-binding",
         {
           method: "POST",
           body: formData,
