@@ -584,18 +584,12 @@ button:disabled {
   align-items: start;
 }
 
-
 .results-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 12px;
-  width: 320px;
+  max-height: 700px;
+  overflow-y: auto;
 }
-
-.result-card {
-  width: 320px;
-}
-
 
 .viewer-container {
   height: 700px;
