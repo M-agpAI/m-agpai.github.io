@@ -58,9 +58,9 @@ export default function App() {
   //   );
   
 
-  const [selectedStructure, setSelectedStructure] = useState(
-    `${import.meta.env.BASE_URL}demo_structures/design_1.cif`
-);
+//   const [selectedStructure, setSelectedStructure] = useState(
+//     `${import.meta.env.BASE_URL}demo_structures/design_1.cif`
+// );
 
 
   const [inputMode, setInputMode] = useState("pdb");
@@ -70,6 +70,10 @@ export default function App() {
   const [fileName, setFileName] = useState("");
   const [status, setStatus] = useState("input");
   const [selectedMetal, setSelectedMetal] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [results, setResults] = useState([]);
+  const [selectedStructure, setSelectedStructure] = useState(null);
+
 
   const activeStep = useMemo(() => {
     if (status === "input") return 1;
@@ -84,15 +88,62 @@ export default function App() {
     setStatus("ready");
   };
 
-  const runBindingSiteAlgorithm = () => {
-    if (!selectedMetal) return;
+  // const runBindingSiteAlgorithm = () => {
+  //   if (!selectedMetal) return;
+
+  //   setStatus("running");
+
+  //   // MOCK: replace this with your real backend call later
+  //   setTimeout(() => {
+  //     setStatus("results");
+  //   }, 1600);
+  // };
+
+  const runBindingSiteAlgorithm = async () => {
+    if (!selectedMetal) {
+      alert("Please choose a metal first.");
+      return;
+    }
+
+    if (!selectedFile) {
+      alert("Please upload a CIF file first.");
+      return;
+    }
 
     setStatus("running");
 
-    // MOCK: replace this with your real backend call later
-    setTimeout(() => {
+    const formData = new FormData();
+    formData.append("metal", selectedMetal);
+    formData.append("cif_file", selectedFile);
+
+    try {
+      const response = await fetch(
+        "https://dkumar-magpai.hf.space/run-magpai",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Magpai backend failed");
+      }
+
+      const data = await response.json();
+
+      setResults(data.results || []);
+
+      if (data.results?.length > 0) {
+        setSelectedStructure(data.results[0].url);
+      }
+
       setStatus("results");
-    }, 1600);
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+      setStatus("input");
+    }
   };
 
   // const payload = JSON.stringify(
@@ -184,7 +235,7 @@ export default function App() {
                     setSelectedMetal(null);
                   }}
                 >
-                  PDB file
+                  CIF file
                 </button>
 
                 <button
@@ -202,16 +253,20 @@ export default function App() {
               {inputMode === "pdb" ? (
                 <label className="upload-box">
                   <Upload size={48} />
-                  <strong>Drop or select a .pdb file</strong>
-                  <span>{fileName || "No file selected"}</span>
+                  <strong>Drop or select a .cif file</strong>
+                  <span>{fileName || "No CIF selected"}</span>
 
                   <input
                     type="file"
-                    accept=".pdb,.ent,.txt"
+                    accept=".cif,.mmcif"
                     onChange={(e) => {
-                      setFileName(e.target.files?.[0]?.name || "");
+                      const file = e.target.files?.[0] || null;
+                      setSelectedFile(file);
+                      setFileName(file?.name || "");
                       setStatus("input");
                       setSelectedMetal(null);
+                      setResults([]);
+                      setSelectedStructure(null);
                     }}
                   />
                 </label>
@@ -313,13 +368,23 @@ export default function App() {
                 )}
               </div> */}
 
-              <div className="protein-viewer">
+              {/* <div className="protein-viewer">
                 <ProteinViewer structureUrl={selectedStructure} />
+              </div> */}
+
+              <div className="protein-viewer">
+                {selectedStructure ? (
+                  <ProteinViewer structureUrl={selectedStructure} />
+                ) : (
+                  <div className="viewer-message">
+                    Upload a CIF, choose a metal, and run Magpai.
+                  </div>
+                )}
               </div>
 
               <button
                 className="success-button"
-                disabled={!selectedMetal || status === "running"}
+                disabled={!selectedMetal || !selectedFile || status === "running"}
                 onClick={runBindingSiteAlgorithm}
               >
                 {status === "running" ? (
@@ -327,7 +392,7 @@ export default function App() {
                 ) : (
                   <Cpu size={20} />
                 )}
-                Run binding-site algorithm
+                Run Magpai
               </button>
             </div>
 
@@ -336,37 +401,41 @@ export default function App() {
 
               {status !== "results" ? (
                 <div className="empty-results">
-                  Results appear here after the binding-site algorithm runs.
+                  Results appear here after Magpai runs.
                 </div>
               ) : (
-                <div className="results-layout">
-                  <div className="results-list">
-                    {demoStructures.map((structure) => (
-                      <div
-                        className="result-card clickable"
-                        key={structure.rank}
-                        onClick={() =>
-                          setSelectedStructure(
-                            `${import.meta.env.BASE_URL}demo_structures/${structure.name}`
-                          )
-                        }
-                      >
-                        <div>
-                          <strong>
-                            #{structure.rank} {structure.name}
-                          </strong>
+                <div className="results-list">
+                  {results.map((structure) => (
+                    <div
+                      className="result-card clickable"
+                      key={structure.rank}
+                      onClick={() => setSelectedStructure(structure.url)}
+                    >
+                      <div>
+                        <strong>
+                          #{structure.rank} {structure.name}
+                        </strong>
 
-                          <span>
-                            Metal: {selectedMetal}
-                          </span>
-                        </div>
+                        <span>
+                          Metal: {structure.metal || selectedMetal}
+                          {structure.score !== undefined && ` · Score: ${structure.score}`}
+                        </span>
                       </div>
-                    ))}
-                  </div>
 
-                  {/* <div className="viewer-container">
-                    <ProteinViewer structureUrl={selectedStructure} />
-                  </div> */}
+                      <div className="result-actions">
+                        <a
+                          href={structure.download_url || structure.url}
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button>
+                            <Download size={16} />
+                            CIF
+                          </button>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
